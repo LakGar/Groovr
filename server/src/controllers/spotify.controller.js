@@ -204,7 +204,7 @@ const spotifyController = {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-
+      console.log("artistResponse", artistResponse.data);
       const genres = artistResponse.data.genres;
       if (genres.length === 0) {
         return res
@@ -218,7 +218,7 @@ const spotifyController = {
         "https://api.spotify.com/v1/search",
         {
           headers: { Authorization: `Bearer ${accessToken}` },
-          params: { q: `genre:"${genre}"`, type: "track", limit: 20 },
+          params: { q: `genre:"${genre}"`, type: "track", limit: 50 },
         }
       );
 
@@ -244,6 +244,57 @@ const spotifyController = {
       );
       res.status(500).json({
         error: "Failed to fetch recommendations",
+        details: error.response?.data || error.message,
+      });
+    }
+  },
+
+  createPlaylist: async (req, res) => {
+    try {
+      const { name, trackUris } = req.body;
+      const accessToken = req.user.access_token;
+
+      // First create an empty playlist
+      const createResponse = await axios.post(
+        `https://api.spotify.com/v1/me/playlists`,
+        {
+          name,
+          description: "Created with Music Matcher",
+          public: false,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const playlistId = createResponse.data.id;
+
+      // Then add tracks to the playlist
+      await axios.post(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          uris: trackUris,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return res.json({
+        success: true,
+        playlistId,
+        playlistUrl: createResponse.data.external_urls.spotify,
+      });
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+      return res.status(500).json({
+        error: "Failed to create playlist",
         details: error.response?.data || error.message,
       });
     }

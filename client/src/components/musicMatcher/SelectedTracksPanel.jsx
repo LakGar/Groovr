@@ -1,9 +1,18 @@
-import { Box, Typography, IconButton, ListItem, Tooltip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  ListItem,
+  Tooltip,
+  Button,
+} from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import DragIndicatorRoundedIcon from "@mui/icons-material/DragIndicatorRounded";
+import PlaylistAddRoundedIcon from "@mui/icons-material/PlaylistAddRounded";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { createPlaylist } from "../../services/spotifyApi";
 
 const SelectedTracksPanel = ({
   tracks = [],
@@ -22,6 +31,14 @@ const SelectedTracksPanel = ({
         display: "flex",
         flexDirection: "column",
         mt: 4,
+        overflowY: "auto",
+        overflowX: "hidden",
+        minWidth: "300px",
+        "&::-Webkit-scrollbar": {
+          display: "none",
+        },
+        msOverflowStyle: "none",
+        scrollbarWidth: "none",
       }}
     >
       <Box
@@ -32,23 +49,44 @@ const SelectedTracksPanel = ({
           mb: 3,
         }}
       >
-        <Typography
-          variant="h6"
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color: "#fff",
+              fontWeight: 600,
+            }}
+          >
+            Selected Tracks
+          </Typography>
+          <Typography
+            sx={{
+              color: alpha("#fff", 0.7),
+              fontSize: "0.875rem",
+            }}
+          >
+            {tracks.length} tracks
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={<PlaylistAddRoundedIcon />}
+          disabled={tracks.length === 0}
+          onClick={() => onCreatePlaylist(tracks)}
           sx={{
-            color: "#fff",
-            fontWeight: 600,
+            background: "#6366F1",
+            "&:hover": {
+              background: "#4F46E5",
+            },
+            "&.Mui-disabled": {
+              background: alpha("#6366F1", 0.3),
+              color: alpha("#fff", 0.5),
+            },
           }}
         >
-          Selected Tracks
-        </Typography>
-        <Typography
-          sx={{
-            color: alpha("#fff", 0.7),
-            fontSize: "0.875rem",
-          }}
-        >
-          {tracks.length} tracks
-        </Typography>
+          Create Playlist
+        </Button>
       </Box>
 
       {tracks.length === 0 ? (
@@ -58,8 +96,6 @@ const SelectedTracksPanel = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            textAlign: "center",
-            p: 3,
           }}
         >
           <Typography sx={{ color: alpha("#fff", 0.5) }}>
@@ -74,11 +110,17 @@ const SelectedTracksPanel = ({
           onReorder={onTracksReorder}
           style={{
             flex: 1,
-            overflowY: "auto",
+            overflowY: "scroll",
             paddingRight: "8px",
             listStyle: "none",
             margin: 0,
             padding: 0,
+            overflowX: "hidden",
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
           }}
         >
           <AnimatePresence>
@@ -228,6 +270,19 @@ const SelectedTracksPanel = ({
       )}
     </Box>
   );
+};
+
+const onCreatePlaylist = async (tracks) => {
+  try {
+    const trackUris = tracks.map((track) => track.uri);
+    const playlistName = "My Groovr Playlist"; // You could make this configurable
+    const response = await createPlaylist(playlistName, trackUris);
+    // You might want to show a success message or redirect to the playlist
+    console.log("Playlist created:", response);
+  } catch (error) {
+    console.error("Error creating playlist:", error);
+    // Handle error (show error message to user)
+  }
 };
 
 export default SelectedTracksPanel;

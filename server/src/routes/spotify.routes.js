@@ -22,4 +22,6 @@ router.get(
   spotifyController.getRecommendations
 );
 
+router.post("/playlist", requireAuth, spotifyController.createPlaylist);
+
 module.exports = router;

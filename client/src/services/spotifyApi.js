@@ -128,8 +128,16 @@ export const getRecommendations = async (previewUrl) => {
 };
 
 export const createPlaylist = async (name, trackUris) => {
-  const response = await spotifyApi.post("/api/playlist", { name, trackUris });
-  return response.data;
+  try {
+    const response = await spotifyApi.post("/api/playlist", {
+      name,
+      trackUris,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating playlist:", error);
+    throw error;
+  }
 };
 
 export const getUserProfile = async () => {
