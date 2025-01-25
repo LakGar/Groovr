@@ -40,6 +40,7 @@ app.use(
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", spotifyRoutes);
+// app.use("/api", userRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
