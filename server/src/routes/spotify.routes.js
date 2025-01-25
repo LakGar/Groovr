@@ -24,4 +24,6 @@ router.get(
 
 router.post("/playlist", requireAuth, spotifyController.createPlaylist);
 
+router.get("/artists/:artistId", requireAuth, spotifyController.getArtist);
+
 module.exports = router;

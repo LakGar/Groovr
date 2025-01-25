@@ -204,7 +204,7 @@ const spotifyController = {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-      console.log("artistResponse", artistResponse.data);
+      console.log("artistResponse: ", artistResponse.data);
       const genres = artistResponse.data.genres;
       if (genres.length === 0) {
         return res
@@ -249,9 +249,32 @@ const spotifyController = {
     }
   },
 
+  getArtist: async (req, res) => {
+    try {
+      const { artistId } = req.params;
+      const accessToken = req.user.access_token;
+
+      const response = await axios.get(
+        `https://api.spotify.com/v1/artists/${artistId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      return res.json({
+        id: response.data.id,
+        name: response.data.name,
+        genres: response.data.genres,
+      });
+    } catch (error) {
+      console.error("Error fetching artist:", error);
+      return res.status(500).json({ error: "Failed to fetch artist details" });
+    }
+  },
+
   createPlaylist: async (req, res) => {
     try {
-      const { name, trackUris } = req.body;
+      const { name, description, trackUris } = req.body;
       const accessToken = req.user.access_token;
 
       // First create an empty playlist
@@ -259,7 +282,7 @@ const spotifyController = {
         `https://api.spotify.com/v1/me/playlists`,
         {
           name,
-          description: "Created with Music Matcher",
+          description,
           public: false,
         },
         {

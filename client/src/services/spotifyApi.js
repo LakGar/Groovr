@@ -127,10 +127,11 @@ export const getRecommendations = async (previewUrl) => {
   return response.data;
 };
 
-export const createPlaylist = async (name, trackUris) => {
+export const createPlaylist = async (name, description, trackUris) => {
   try {
     const response = await spotifyApi.post("/api/playlist", {
       name,
+      description,
       trackUris,
     });
     return response.data;
