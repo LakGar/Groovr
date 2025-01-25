@@ -8,6 +8,17 @@ const SPOTIFY_CONFIG = {
   tokenEndpoint: "https://accounts.spotify.com/api/token",
   authEndpoint: "https://accounts.spotify.com/authorize",
   apiBaseUrl: "https://api.spotify.com/v1",
+  scopes: [
+    "user-read-private",
+    "user-read-email",
+    "playlist-modify-public",
+    "playlist-modify-private",
+    "user-library-read",
+    "user-top-read",
+    "user-read-recently-played",
+    "user-read-playback-state",
+    "user-read-currently-playing",
+  ],
 };
 
 const spotifyApi = axios.create({

@@ -77,6 +77,36 @@ export const getRecentlyPlayed = async () => {
     throw error;
   }
 };
+export const getUserStats = async () => {
+  try {
+    const [topGenres, recentlyPlayed, topArtists] = await Promise.all([
+      spotifyApi.get("/api/user/top-genres"),
+      spotifyApi.get("/api/user/recently-played"),
+      spotifyApi.get("/api/user/top-artists"),
+    ]);
+
+    return {
+      topGenres: topGenres.data.genres || [],
+      recentlyPlayed: recentlyPlayed.data.tracks || [], // Make sure this is an array
+      topArtists: topArtists.data.artists || [],
+      listeningTime: calculateListeningTime(recentlyPlayed.data.tracks || []),
+    };
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return {
+      topGenres: [],
+      recentlyPlayed: [],
+      topArtists: [],
+      listeningTime: "0h",
+    };
+  }
+};
+
+const calculateListeningTime = (tracks) => {
+  const totalMs = tracks.reduce((acc, track) => acc + track.duration_ms, 0);
+  const hours = Math.round(totalMs / (1000 * 60 * 60));
+  return `${hours}h`;
+};
 
 export const searchTracks = async (query) => {
   try {

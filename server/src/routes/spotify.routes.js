@@ -5,14 +5,21 @@ const { requireAuth } = require("../middleware/auth.middleware");
 
 // User profile and data routes
 router.get("/user/profile", requireAuth, spotifyController.getUserProfile);
-router.get("/user/top-genres", requireAuth, spotifyController.getTopGenres);
 router.get(
   "/user/recently-played",
   requireAuth,
   spotifyController.getRecentlyPlayed
 );
-
+router.get("/user/top-artists", requireAuth, spotifyController.getTopArtists);
+router.get("/user/top-genres", requireAuth, spotifyController.getTopGenres);
 // Search route
 router.get("/search", requireAuth, spotifyController.searchTracks);
+
+// Add this new route
+router.get(
+  "/recommendations/:trackId",
+  requireAuth,
+  spotifyController.getRecommendations
+);
 
 module.exports = router;

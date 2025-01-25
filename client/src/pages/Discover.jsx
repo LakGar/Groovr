@@ -3,25 +3,40 @@ import { Box } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile } from "../services/spotifyApi";
 import Header from "../components/Header";
+import StatsSection from "../components/StatsSection";
+import { Navigate } from "react-router-dom";
 
-function Discover() {
-  const { isAuthenticated } = useAuth();
+const Discover = () => {
+  const { isAuthenticated, isLoading } = useAuth();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      if (!isAuthenticated) return;
+
       try {
         const userData = await getUserProfile();
         setUser(userData);
       } catch (error) {
-        console.error("Error fetching user profile:", error);
+        if (error.message === "UNAUTHORIZED") {
+          // Handle unauthorized error - maybe redirect to login
+          console.error("Session expired");
+        } else {
+          console.error("Error fetching user profile:", error);
+        }
       }
     };
 
-    if (isAuthenticated) {
-      fetchUserProfile();
-    }
+    fetchUserProfile();
   }, [isAuthenticated]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <Box
@@ -32,8 +47,11 @@ function Discover() {
       }}
     >
       <Header user={user} />
+      <Box sx={{ pt: 10 }}>
+        <StatsSection />
+      </Box>
     </Box>
   );
-}
+};
 
 export default Discover;

@@ -23,42 +23,6 @@ const spotifyController = {
     }
   },
 
-  getTopGenres: async (req, res) => {
-    try {
-      const accessToken = req.user.access_token;
-
-      const response = await axios.get(
-        "https://api.spotify.com/v1/me/top/artists",
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params: {
-            limit: 20,
-            time_range: "medium_term",
-          },
-        }
-      );
-
-      // Extract and count genres
-      const genreCounts = {};
-      response.data.items.forEach((artist) => {
-        artist.genres.forEach((genre) => {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        });
-      });
-
-      // Sort genres by count and get top 5
-      const topGenres = Object.entries(genreCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5)
-        .map(([genre]) => genre);
-
-      return res.json({ genres: topGenres });
-    } catch (error) {
-      console.error("Error fetching top genres:", error);
-      return res.status(500).json({ error: "Failed to fetch top genres" });
-    }
-  },
-
   getRecentlyPlayed: async (req, res) => {
     try {
       const accessToken = req.user.access_token;
@@ -66,8 +30,13 @@ const spotifyController = {
       const response = await axios.get(
         "https://api.spotify.com/v1/me/player/recently-played",
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          params: { limit: 20 },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            limit: 20,
+          },
         }
       );
 
@@ -76,17 +45,103 @@ const spotifyController = {
         name: item.track.name,
         artist: item.track.artists[0].name,
         albumArt: item.track.album.images[0]?.url,
-        previewUrl: item.track.preview_url,
-        uri: item.track.uri,
         played_at: item.played_at,
+        duration_ms: item.track.duration_ms,
       }));
 
       return res.json({ tracks });
     } catch (error) {
-      console.error("Error fetching recently played:", error);
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch recently played tracks" });
+      console.error(
+        "Error in getRecentlyPlayed:",
+        error.response?.data || error.message
+      );
+      return res.status(500).json({
+        error: "Failed to fetch recently played tracks",
+        details: error.response?.data || error.message,
+      });
+    }
+  },
+
+  getTopArtists: async (req, res) => {
+    try {
+      const accessToken = req.user.access_token;
+
+      const response = await axios.get(
+        "https://api.spotify.com/v1/me/top/artists",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            limit: 20,
+            time_range: "medium_term",
+          },
+        }
+      );
+
+      const artists = response.data.items.map((artist) => ({
+        id: artist.id,
+        name: artist.name,
+        genres: artist.genres,
+        images: artist.images,
+        popularity: artist.popularity,
+      }));
+
+      return res.json({ artists });
+    } catch (error) {
+      console.error(
+        "Error in getTopArtists:",
+        error.response?.data || error.message
+      );
+      return res.status(500).json({
+        error: "Failed to fetch top artists",
+        details: error.response?.data || error.message,
+      });
+    }
+  },
+
+  getTopGenres: async (req, res) => {
+    try {
+      const accessToken = req.user.access_token;
+
+      const response = await axios.get(
+        "https://api.spotify.com/v1/me/top/artists",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            limit: 50,
+            time_range: "medium_term",
+          },
+        }
+      );
+
+      // Extract and count genres
+      const genreCounts = response.data.items.reduce((acc, artist) => {
+        artist.genres.forEach((genre) => {
+          acc[genre] = (acc[genre] || 0) + 1;
+        });
+        return acc;
+      }, {});
+
+      // Sort genres by count
+      const sortedGenres = Object.entries(genreCounts)
+        .sort(([, a], [, b]) => b - a)
+        .map(([genre]) => genre);
+
+      return res.json({ genres: sortedGenres });
+    } catch (error) {
+      console.error(
+        "Error in getTopGenres:",
+        error.response?.data || error.message
+      );
+      return res.status(500).json({
+        error: "Failed to fetch top genres",
+        details: error.response?.data || error.message,
+      });
     }
   },
 
@@ -125,6 +180,72 @@ const spotifyController = {
     } catch (error) {
       console.error("Error searching tracks:", error);
       return res.status(500).json({ error: "Failed to search tracks" });
+    }
+  },
+
+  getRecommendations: async (req, res) => {
+    const { trackId } = req.params;
+
+    try {
+      const accessToken = req.user.access_token;
+
+      // Step 1: Get track info and associated genres
+      const trackResponse = await axios.get(
+        `https://api.spotify.com/v1/tracks/${trackId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const artistId = trackResponse.data.artists[0].id;
+      const artistResponse = await axios.get(
+        `https://api.spotify.com/v1/artists/${artistId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const genres = artistResponse.data.genres;
+      if (genres.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No genres found for the track." });
+      }
+
+      // Step 2: Search for tracks using the first genre
+      const genre = genres[0];
+      const searchResponse = await axios.get(
+        "https://api.spotify.com/v1/search",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { q: `genre:"${genre}"`, type: "track", limit: 20 },
+        }
+      );
+
+      const recommendedTracks = searchResponse.data.tracks.items.map(
+        (track) => ({
+          id: track.id,
+          name: track.name,
+          artist: track.artists[0].name,
+          albumArt: track.album.images[0]?.url,
+          previewUrl: track.preview_url,
+          uri: track.uri,
+        })
+      );
+
+      return res.status(200).json({
+        message: `Recommendations based on the genre: ${genre}`,
+        tracks: recommendedTracks,
+      });
+    } catch (error) {
+      console.error(
+        "Error in getRecommendations:",
+        error.response?.data || error.message
+      );
+      res.status(500).json({
+        error: "Failed to fetch recommendations",
+        details: error.response?.data || error.message,
+      });
     }
   },
 };

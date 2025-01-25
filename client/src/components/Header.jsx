@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   AppBar,
   Box,
@@ -20,12 +20,14 @@ import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import ExploreIcon from "@mui/icons-material/Explore";
 import { useAuth } from "../context/AuthContext";
 import { searchTracks } from "../services/spotifyApi";
 import debounce from "lodash/debounce";
 
 function Header({ user }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +35,9 @@ function Header({ user }) {
   const [loading, setLoading] = useState(false);
   const [searchAnchorEl, setSearchAnchorEl] = useState(null);
   const searchInputRef = useRef(null);
+
+  const isDiscoverPage = location.pathname === "/discover";
+  const isMusicMatcherPage = location.pathname === "/musicMatcher";
 
   // Debounced search function
   const debouncedSearch = useRef(
@@ -128,54 +133,56 @@ function Header({ user }) {
           GROOVR
         </Typography>
 
-        {/* Search Bar */}
-        <Box
-          sx={{
-            position: "relative",
-            borderRadius: 2,
-            backgroundColor: alpha("#fff", 0.05),
-            "&:hover": {
-              backgroundColor: alpha("#fff", 0.08),
-            },
-            width: "100%",
-            maxWidth: "600px",
-            transition: "all 0.2s ease",
-          }}
-        >
+        {/* Search Bar - Only show if not on MusicMatcher page */}
+        {!isMusicMatcherPage && (
           <Box
             sx={{
-              padding: "0 16px",
-              height: "100%",
-              position: "absolute",
-              pointerEvents: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              position: "relative",
+              borderRadius: 2,
+              backgroundColor: alpha("#fff", 0.05),
+              "&:hover": {
+                backgroundColor: alpha("#fff", 0.08),
+              },
+              width: "100%",
+              maxWidth: "600px",
+              transition: "all 0.2s ease",
             }}
           >
-            <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.5)" }} />
-          </Box>
-          <InputBase
-            ref={searchInputRef}
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Search for songs..."
-            sx={{
-              color: "inherit",
-              width: "100%",
-              "& .MuiInputBase-input": {
-                padding: "10px 10px 10px 48px",
+            <Box
+              sx={{
+                padding: "0 16px",
+                height: "100%",
+                position: "absolute",
+                pointerEvents: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.5)" }} />
+            </Box>
+            <InputBase
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search for songs..."
+              sx={{
+                color: "inherit",
                 width: "100%",
-                color: "white",
-                fontSize: "0.95rem",
-                "&::placeholder": {
-                  color: "rgba(255, 255, 255, 0.5)",
-                  opacity: 1,
+                "& .MuiInputBase-input": {
+                  padding: "10px 10px 10px 48px",
+                  width: "100%",
+                  color: "white",
+                  fontSize: "0.95rem",
+                  "&::placeholder": {
+                    color: "rgba(255, 255, 255, 0.5)",
+                    opacity: 1,
+                  },
                 },
-              },
-            }}
-          />
-        </Box>
+              }}
+            />
+          </Box>
+        )}
 
         {/* Search Results Dropdown */}
         <Popper
@@ -324,30 +331,68 @@ function Header({ user }) {
           <Box
             sx={{
               display: "flex",
-              gap: 1,
+              gap: 3,
               marginLeft: "auto",
               marginRight: 2,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "scale(1.05)",
-              },
             }}
           >
-            <AutoAwesomeIcon sx={{ color: "white" }} />
-            <Typography
-              onClick={() => navigate("/tailor")}
+            <Box
+              onClick={() => navigate("/discover")}
               sx={{
-                color: "white",
-                fontSize: "0.95rem",
-                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
                 cursor: "pointer",
-                opacity: 0.9,
-
-                display: { xs: "none", md: "block" },
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                },
               }}
             >
-              Tailor Playlist
-            </Typography>
+              <Typography
+                sx={{
+                  color: isDiscoverPage ? "#6366F1" : "white",
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  opacity: 0.9,
+                  display: { xs: "none", md: "block" },
+                }}
+              >
+                Discover
+              </Typography>
+              <ExploreIcon
+                sx={{ color: isDiscoverPage ? "#6366F1" : "white" }}
+              />
+            </Box>
+
+            <Box
+              onClick={() => navigate("/musicMatcher")}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
+                },
+              }}
+            >
+              <Typography
+                sx={{
+                  color: isMusicMatcherPage ? "#6366F1" : "white",
+                  fontSize: "0.95rem",
+                  fontWeight: 500,
+                  opacity: 0.9,
+                  display: { xs: "none", md: "block" },
+                }}
+              >
+                Tailor Playlist
+              </Typography>
+              <AutoAwesomeIcon
+                sx={{ color: isMusicMatcherPage ? "#6366F1" : "white" }}
+              />
+            </Box>
           </Box>
         )}
 

@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Discover from "./pages/Discover";
 import Profile from "./pages/Profile";
 import AuthCallback from "./pages/AuthCallback";
+import MusicMatcher from "./pages/MusicMatcher";
 
 const theme = createTheme({
   palette: {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/discover" element={<Discover />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/callback" element={<AuthCallback />} />
+            <Route path="/musicMatcher" element={<MusicMatcher />} />
           </Routes>
         </Router>
       </AuthProvider>

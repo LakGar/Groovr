@@ -2,16 +2,6 @@ const axios = require("axios");
 const { SPOTIFY_CONFIG } = require("../config/spotify");
 const querystring = require("querystring");
 
-const generateRandomString = (length) => {
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let text = "";
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-};
-
 const authController = {
   login: (req, res) => {
     try {
@@ -23,26 +13,25 @@ const authController = {
         "playlist-modify-private",
         "user-library-read",
         "user-top-read",
+        "user-read-recently-played",
+        "user-read-playback-state",
+        "user-read-currently-playing",
       ].join(" ");
 
       const queryParams = querystring.stringify({
         response_type: "code",
         client_id: process.env.SPOTIFY_CLIENT_ID,
         scope: scope,
-        redirect_uri: process.env.SPOTIFY_REDIRECT_URI,
+        redirect_uri: SPOTIFY_CONFIG.redirectUri,
         state: state,
       });
 
-      console.log(
-        "Login URL generated:",
-        `https://accounts.spotify.com/authorize?${queryParams}`
-      );
-      res.json({
-        url: `https://accounts.spotify.com/authorize?${queryParams}`,
-      });
+      const authUrl = `${SPOTIFY_CONFIG.authEndpoint}?${queryParams}`;
+      console.log("Login URL generated:", authUrl);
+      res.json({ url: authUrl });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(500).json({ error: "Login initialization failed" });
+      res.status(500).json({ error: "Login failed" });
     }
   },
 
