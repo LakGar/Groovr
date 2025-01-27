@@ -10,6 +10,7 @@ import { getUserProfile } from "../services/spotifyApi";
 import SelectedTracksPanel from "../components/musicMatcher/SelectedTracksPanel";
 import Header from "../components/Header";
 import { useAuth } from "../context/AuthContext";
+import { fetchDeezerPreview } from "../services/deezerApi";
 
 const MusicMatcher = () => {
   const { isAuthenticated } = useAuth();
@@ -36,7 +37,21 @@ const MusicMatcher = () => {
       fetchUserProfile();
     }
   }, [isAuthenticated]);
+  const handleSongSelect = async (track) => {
+    try {
+      // Get preview URL from Deezer
+      const previewUrl = await fetchDeezerPreview(track.name, track.artist);
+      if (!previewUrl) {
+        console.log("Preview not available.");
+        // Continue even if preview is not available
+      }
 
+      setSelectedSong(track);
+      setIsMatching(true);
+    } catch (error) {
+      console.error("Error handling song selection:", error);
+    }
+  };
   return (
     <Box
       sx={{
@@ -117,12 +132,7 @@ const MusicMatcher = () => {
               similar tracks to create your perfect playlist.
             </Typography>
 
-            <SearchSection
-              onSongSelect={(song) => {
-                setSelectedSong(song);
-                setIsMatching(true);
-              }}
-            />
+            <SearchSection onSongSelect={handleSongSelect} />
           </Box>
         ) : (
           // Matching View with Side Panels
